@@ -1,10 +1,10 @@
 /*pins for the motor*/
-#define enableleft 7
-#define leftin1 6
+#define enableleft 6
+#define leftin1 7
 #define leftin2 5
 #define rightin1 4
-#define rightin2 3
-#define enableright 2
+#define rightin2 2
+#define enableright 3
 
 #define echofront 8 // attach pin D3 Arduino to pin Echo of HC-SR04
 #define trigfront 9 //attach pin D4 Arduino to pin Trig of HC-SR04
@@ -16,68 +16,72 @@
 long duration;
 int distance;
 int frontDist, leftDist, rightDist;
-int defaultspeed = 250;
+int defaultspeed = 150;
 
-void forward(uint8_t defaultspeed)
+void forward(uint8_t speed1)
 {
-	analogWrite(enableleft , defaultspeed);
-   digitalWrite (leftin1, HIGH);
-   digitalWrite (leftin2, LOW);
+	analogWrite(enableleft , speed1);
+ analogWrite(enableright , speed1);
+   digitalWrite (leftin1, LOW);
+   digitalWrite (leftin2, HIGH);
    digitalWrite (rightin1, HIGH);
    digitalWrite (rightin2, LOW); 
  }
 
- void backward(uint8_t defaultspeed)
+ void backward(uint8_t speed1)
  {
-	 analogWrite(enableleft , defaultspeed);
-    digitalWrite (leftin2, HIGH);
-    digitalWrite (leftin1,LOW);
+	 analogWrite(enableleft , speed1/2);
+   analogWrite(enableright , speed1/2);
+    digitalWrite (leftin2, LOW);
+    digitalWrite (leftin1,HIGH);
     digitalWrite (rightin2, HIGH);
     digitalWrite (rightin1,LOW);  
  }
 
-void rightback(uint8_t defaultspeed)
+void rightback(uint8_t speed1)
  {
-	 analogWrite(enableleft , defaultspeed);
+  analogWrite(enableright , speed1/2);
+	 analogWrite(enableleft , speed1/2);
     digitalWrite (leftin2,LOW);
     digitalWrite (leftin1,LOW);
     digitalWrite (rightin2, HIGH);
     digitalWrite (rightin1,LOW);  
  }
 
- void leftback(uint8_t defaultspeed)
+ void leftback(uint8_t speed1)
  {
-	 analogWrite(enableleft , defaultspeed);
-    digitalWrite (leftin2, HIGH);
-    digitalWrite (leftin1,LOW);
+  analogWrite(enableright , speed1/2);
+	 analogWrite(enableleft , speed1/2);
+    digitalWrite (leftin2, LOW);
+    digitalWrite (leftin1,HIGH);
     digitalWrite (rightin2,LOW);
     digitalWrite (rightin1,LOW);  
  }
 
- void rightfront(uint8_t defaultspeed)
+ void rightfront(uint8_t speed1)
  {
-	 analogWrite(enableleft , defaultspeed);
+  analogWrite(enableright , speed1/2);
+	 analogWrite(enableleft , speed1/2);
     digitalWrite (leftin1,LOW);
     digitalWrite (leftin2,LOW);
     digitalWrite (rightin1, HIGH);
     digitalWrite (rightin2,LOW);  
   }
   
- void leftfront(uint8_t defaultspeed)
+ void leftfront(uint8_t speed1)
  {
-	 analogWrite(enableleft , defaultspeed);
-    digitalWrite (leftin1, HIGH);
-    digitalWrite (leftin2,LOW);
+  analogWrite(enableright , speed1/2);
+	 analogWrite(enableleft , speed1/2);
+    digitalWrite (leftin1, LOW);
+    digitalWrite (leftin2,HIGH);
     digitalWrite (rightin1,LOW);
     digitalWrite (rightin2,LOW);  
  }
  
  void stopit()
  {
-	digitalWrite (leftin1,LOW);
-    digitalWrite (leftin2,LOW);
-    digitalWrite (rightin1,LOW);
-    digitalWrite (rightin2,LOW);  
+	analogWrite(enableright , 0);
+   analogWrite(enableleft , 0);
   }
 
 int getDist(int trigPin, int echoPin)
@@ -97,29 +101,32 @@ int getDist(int trigPin, int echoPin)
 
 void compDist()
   {
+  frontDist=getDist(trigfront, echofront);
   rightDist=getDist(trigright, echoright);
   leftDist=getDist(trigleft, echoleft);
   if(leftDist > rightDist && leftDist>=5){
     leftfront(defaultspeed);
-     
-    delay(1000);
-    forward(defaultspeed);
+    while(frontDist<20){
+      frontDist=getDist(trigfront, echofront);
+      }
   }
   else if(rightDist > leftDist && rightDist>=5){
      rightfront(defaultspeed);
-  
-     delay(1000);
-     forward(defaultspeed);
+     while(frontDist<20){
+      frontDist=getDist(trigfront, echofront);
+      }
   }
     else
    { 
-     backward(defaultspeed);    
+     backward(defaultspeed);
+     while(frontDist<20){
+      frontDist=getDist(trigfront, echofront);
+      }
  } 
 
 }
 
 void setup() {
-  // put your setup code here, to run once:
   //Serial.begin(9600);
   pinMode(trigfront, OUTPUT); // Sets the trigPin as an OUTPUT
   pinMode(echofront, INPUT); // Sets the echoPin as an INPUT
@@ -138,12 +145,13 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   frontDist=getDist(trigfront, echofront);
- // Serial.println(frontDist);
-if(frontDist>=10){
- forward(defaultspeed);
-}
-else{
-  stopit(); 
-  compDist();
-}
+  // Serial.println(frontDist);
+  if(frontDist>=20){
+    forward(defaultspeed);
+  }
+  else{
+    stopit(); 
+    delay(200);
+    compDist();
+  }
 }
